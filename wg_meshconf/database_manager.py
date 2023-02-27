@@ -361,7 +361,10 @@ class DatabaseManager:
                         )
                     )
 
-                    if database["peers"][p].get("Endpoint") is not None:
+                    peer_endpoint = database["peers"][p].get("Endpoint")
+                    my_endpoint = database["peers"][peer].get("Endpoint")
+
+                    if peer_endpoint is not None:
                         config.write(
                             "Endpoint = {}:{}\n".format(
                                 database["peers"][p]["Endpoint"],
@@ -369,15 +372,21 @@ class DatabaseManager:
                             )
                         )
 
-                    if database["peers"][p].get("Address") is not None:
-                        if database["peers"][p].get("AllowedIPs") is not None:
-                            allowed_ips = ", ".join(
-                                database["peers"][p]["Address"]
-                                + database["peers"][p]["AllowedIPs"]
-                            )
-                        else:
-                            allowed_ips = ", ".join(database["peers"][p]["Address"])
-                        config.write("AllowedIPs = {}\n".format(allowed_ips))
+                    peers_can_connect_directly = (
+                        peer_endpoint is not None or my_endpoint is not None
+                    )
+
+                    if peers_can_connect_directly:
+                        if database["peers"][p].get("Address") is not None:
+                            if database["peers"][p].get("AllowedIPs") is not None:
+                                allowed_ips = ", ".join(
+                                    database["peers"][p]["Address"]
+                                    + database["peers"][p]["AllowedIPs"]
+                                )
+                            else:
+                                allowed_ips = ", ".join(database["peers"][p]["Address"])
+
+                            config.write("AllowedIPs = {}\n".format(allowed_ips))
 
                     for key in PEER_OPTIONAL_ATTRIBUTES:
                         if database["peers"][p].get(key) is not None:
