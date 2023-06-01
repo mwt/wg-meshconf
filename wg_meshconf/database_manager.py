@@ -98,7 +98,7 @@ class DatabaseManager:
             database = self.read_database()
 
             # check values that cannot be generated automatically
-            for key in ["Address", "Endpoint"]:
+            for key in ["Address"]:
                 for peer in database["peers"]:
                     if database["peers"][peer].get(key) is None:
                         print(f"The value of {key} cannot be automatically generated")
