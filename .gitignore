@@ -9,6 +9,8 @@ Session.vim
 *.csv
 wg_meshconf/output/
 wg-meshconf.odg
+/output/
+*.csv#
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
