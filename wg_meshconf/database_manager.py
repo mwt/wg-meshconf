@@ -53,10 +53,6 @@ PEER_ATTRIBUTES = [
     "PersistentKeepalive",
 ]
 
-PEER_OPTIONAL_ATTRIBUTES = [
-    "PersistentKeepalive",
-]
-
 KEY_TYPE = {
     "Name": str,
     "Address": list,
@@ -385,8 +381,10 @@ class DatabaseManager:
                                 allowed_ips = ", ".join(database["peers"][p]["Address"])
                             config.write("AllowedIPs = {}\n".format(allowed_ips))
 
-                        for key in PEER_OPTIONAL_ATTRIBUTES:
-                            if database["peers"][p].get(key) is not None:
-                                config.write(
-                                    "{} = {}\n".format(key, database["peers"][p][key])
+                        if database["peers"][peer].get("PersistentKeepalive") is not None:
+                            config.write(
+                                "{} = {}\n".format(
+                                    "PersistentKeepalive",
+                                    database["peers"][peer]["PersistentKeepalive"],
                                 )
+                            )
