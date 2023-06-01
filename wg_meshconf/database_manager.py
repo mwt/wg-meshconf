@@ -9,6 +9,7 @@ Last Modified: June 16, 2021
 
 import copy
 import csv
+import ipaddress
 import pathlib
 import sys
 
@@ -352,7 +353,13 @@ class DatabaseManager:
 
                     peer_endpoint = database["peers"][p].get("Endpoint")
                     my_endpoint = database["peers"][peer].get("Endpoint")
-                    
+
+                    # Clean out the host bit of the Address to use in AllowedIPs
+                    peer_subnets = [
+                        ipaddress.ip_network(subnet, strict=False)
+                        for subnet in database["peers"][p]["Address"]
+                    ]
+
                     # only include peers that can be connected to
                     if peer_endpoint is not None or my_endpoint is not None:
                         config.write("\n[Peer]\n")
@@ -374,7 +381,7 @@ class DatabaseManager:
                         if database["peers"][p].get("Address") is not None:
                             if database["peers"][p].get("AllowedIPs") is not None:
                                 allowed_ips = ", ".join(
-                                    database["peers"][p]["Address"]
+                                    [ str(subnet) for subnet in peer_subnets ]
                                     + database["peers"][p]["AllowedIPs"]
                                 )
                             else:
