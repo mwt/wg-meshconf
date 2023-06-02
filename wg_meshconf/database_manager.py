@@ -444,7 +444,7 @@ class DatabaseManager:
                                 )
                             )
 
-                    if with_psk:
-                        for psk_tuple in [x for x in psk_tuples if peer in x]:
-                            if p in psk_tuple:
-                                config.write(f'PresharedKey = {psk_tuple[2]}\n')
+                        if with_psk:
+                            for psk_tuple in [x for x in psk_tuples if peer in x]:
+                                if p in psk_tuple:
+                                    config.write(f'PresharedKey = {psk_tuple[2]}\n')
