@@ -33,9 +33,7 @@ def parse_arguments():
     )
 
     parser.add_argument(
-        "--with-psk",
-        help="generate PSKs for each connection",
-        action="store_true"
+        "--with-psk", help="generate PSKs for each connection", action="store_true"
     )
 
     # add subparsers for commands
@@ -55,7 +53,9 @@ def parse_arguments():
         "--allowedips", help="additional allowed IP addresses", action="append"
     )
     addpeer.add_argument("--privatekey", help="private key of server interface")
-    addpeer.add_argument("--presharedkeys", help="preshared keys for connection to other peers")
+    addpeer.add_argument(
+        "--presharedkeys", help="preshared keys for connection to other peers"
+    )
     addpeer.add_argument("--listenport", help="port to listen on", default=51820)
     addpeer.add_argument(
         "--persistentkeepalive", help="set persistent keepalive interval"
@@ -84,7 +84,9 @@ def parse_arguments():
         "--allowedips", help="additional allowed IP addresses", action="append"
     )
     updatepeer.add_argument("--privatekey", help="private key of server interface")
-    updatepeer.add_argument("--presharedkeys", help="preshared keys for connection to other peers")
+    updatepeer.add_argument(
+        "--presharedkeys", help="preshared keys for connection to other peers"
+    )
     updatepeer.add_argument("--listenport", help="port to listen on")
     updatepeer.add_argument(
         "--persistentkeepalive", help="set persistent keepalive interval"
