@@ -7,20 +7,17 @@ Date Created: July 19, 2020
 Last Modified: June 16, 2021
 """
 
-# local imports
-from .wireguard import WireGuard
-
-# built-in imports
 import copy
 import csv
+import ipaddress
 import pathlib
 import sys
 import itertools
 
-# third party imports
 from rich.console import Console
 from rich.table import Table
 
+from .wireguard import WireGuard
 
 INTERFACE_ATTRIBUTES = [
     "Address",
@@ -58,10 +55,6 @@ PEER_ATTRIBUTES = [
     "PersistentKeepalive",
 ]
 
-PEER_OPTIONAL_ATTRIBUTES = [
-    "PersistentKeepalive",
-]
-
 KEY_TYPE = {
     "Name": str,
     "Address": list,
@@ -92,7 +85,9 @@ class DatabaseManager:
     def init(self, with_psk: bool):
         """initialize an empty database file"""
         if not self.database_path.exists():
-            with self.database_path.open(mode="w", encoding="utf-8", newline="") as database_file:
+            with self.database_path.open(
+                mode="w", encoding="utf-8", newline=""
+            ) as database_file:
                 writer = csv.DictWriter(
                     database_file, KEY_TYPE.keys(), quoting=csv.QUOTE_ALL
                 )
@@ -102,7 +97,7 @@ class DatabaseManager:
             database = self.read_database()
 
             # check values that cannot be generated automatically
-            for key in ["Address", "Endpoint"]:
+            for key in ["Address"]:
                 for peer in database["peers"]:
                     if database["peers"][peer].get(key) is None:
                         print(f"The value of {key} cannot be automatically generated")
@@ -173,7 +168,9 @@ class DatabaseManager:
             data (dict): content of database
         """
 
-        with self.database_path.open(mode="w", encoding="utf-8", newline="") as database_file:
+        with self.database_path.open(
+            mode="w", encoding="utf-8", newline=""
+        ) as database_file:
             writer = csv.DictWriter(
                 database_file, KEY_TYPE.keys(), quoting=csv.QUOTE_ALL
             )
@@ -401,36 +398,50 @@ class DatabaseManager:
 
                 # generate [Peer] sections for all other peers
                 for p in [i for i in database["peers"] if i != peer]:
-                    config.write("\n[Peer]\n")
-                    config.write("# Name: {}\n".format(p))
-                    config.write(
-                        "PublicKey = {}\n".format(
-                            self.wireguard.pubkey(database["peers"][p]["PrivateKey"])
-                        )
-                    )
 
-                    if database["peers"][p].get("Endpoint") is not None:
+                    peer_endpoint = database["peers"][p].get("Endpoint")
+                    my_endpoint = database["peers"][peer].get("Endpoint")
+
+                    # Clean out the host bit of the Address to use in AllowedIPs
+                    peer_subnets = [
+                        ipaddress.ip_network(subnet, strict=False)
+                        for subnet in database["peers"][p]["Address"]
+                    ]
+
+                    # only include peers that can be connected to
+                    if peer_endpoint is not None or my_endpoint is not None:
+                        config.write("\n[Peer]\n")
+                        config.write("# Name: {}\n".format(p))
                         config.write(
-                            "Endpoint = {}:{}\n".format(
-                                database["peers"][p]["Endpoint"],
-                                database["peers"][p]["ListenPort"],
+                            "PublicKey = {}\n".format(
+                                self.wireguard.pubkey(database["peers"][p]["PrivateKey"])
                             )
                         )
 
-                    if database["peers"][p].get("Address") is not None:
-                        if database["peers"][p].get("AllowedIPs") is not None:
-                            allowed_ips = ", ".join(
-                                database["peers"][p]["Address"]
-                                + database["peers"][p]["AllowedIPs"]
-                            )
-                        else:
-                            allowed_ips = ", ".join(database["peers"][p]["Address"])
-                        config.write("AllowedIPs = {}\n".format(allowed_ips))
-
-                    for key in PEER_OPTIONAL_ATTRIBUTES:
-                        if database["peers"][p].get(key) is not None:
+                        if peer_endpoint is not None:
                             config.write(
-                                "{} = {}\n".format(key, database["peers"][p][key])
+                                "Endpoint = {}:{}\n".format(
+                                    database["peers"][p]["Endpoint"],
+                                    database["peers"][p]["ListenPort"],
+                                )
+                            )
+
+                        if database["peers"][p].get("Address") is not None:
+                            if database["peers"][p].get("AllowedIPs") is not None:
+                                allowed_ips = ", ".join(
+                                    [ str(subnet) for subnet in peer_subnets ]
+                                    + database["peers"][p]["AllowedIPs"]
+                                )
+                            else:
+                                allowed_ips = ", ".join([ str(subnet) for subnet in peer_subnets ])
+                            config.write("AllowedIPs = {}\n".format(allowed_ips))
+
+                        if database["peers"][peer].get("PersistentKeepalive") is not None:
+                            config.write(
+                                "{} = {}\n".format(
+                                    "PersistentKeepalive",
+                                    database["peers"][peer]["PersistentKeepalive"],
+                                )
                             )
 
                     if with_psk:
