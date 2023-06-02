@@ -385,7 +385,7 @@ class DatabaseManager:
                                     + database["peers"][p]["AllowedIPs"]
                                 )
                             else:
-                                allowed_ips = ", ".join(database["peers"][p]["Address"])
+                                allowed_ips = ", ".join([ str(subnet) for subnet in peer_subnets ])
                             config.write("AllowedIPs = {}\n".format(allowed_ips))
 
                         if database["peers"][peer].get("PersistentKeepalive") is not None:
